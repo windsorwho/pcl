@@ -1,0 +1,5 @@
+numpy
+metric_learn
+matplotlib
+scipy
+tqdm

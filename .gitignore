@@ -112,3 +112,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.pack_features.py.swp
