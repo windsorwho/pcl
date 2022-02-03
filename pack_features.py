@@ -57,7 +57,7 @@ def pack_test_a_features():
     pickle.dump(query_features,
                 open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'wb'))
     pickle.dump(gallery_features,
-                open(os.path.join(TEST_A_DIR, 'gallery_features,pkl'), 'wb'))
+                open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'wb'))
     return query_features, gallery_features
 
 
