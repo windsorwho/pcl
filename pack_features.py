@@ -78,6 +78,14 @@ def read_packed_train_data():
     return features, labels
 
 
+def read_packed_test_a_data():
+    gallery_features = pickle.load(
+        open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'rb'))
+    query_features = pickle.load(
+        open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'rb'))
+    return query_features, gallery_features
+
+
 def remove_single_class(features, labels):
     " Input should be two np arrays of numbers"
     single_labels = np.where(np.bincount(labels) == 1)[0]
@@ -119,9 +127,35 @@ def plot_tsne(X, y, colormap=plt.cm.Paired):
     plt.show()
 
 
+def remove_null_columns(train, query, gallery):
+    train_idx = np.var(train, axis=0).nonzero()[0]
+    query_idx = np.var(query, axis=0).nonzero()[0]
+    gallery_idx = np.var(gallery, axis=0).nonzero()[0]
+    if (not np.array_equal(gallery_idx, query_idx)) or (not np.array_equal(
+            train_idx, query_idx)):
+        logging.error(
+            'Inputs do not share same zero colums, will return original input..'
+        )
+        return train, query, gallery
+    train = train[:, train_idx]
+    query = query[:, train_idx]
+    gallery = gallery[:, train_idx]
+    return train, query, gallery
+
+
 def try_metric_learn():
     features, labels = read_packed_train_data()
-    features, lables = remove_single_class(features, labels)
+    queries, galleries = read_packed_test_a_data()
+    features, labels = remove_single_class(features, labels)
+    features, queries, galleries = remove_null_columns(features, queries,
+                                                       galleries)
+    np.savez(open(os.path.join(TRAIN_DATA_DIR, 'dense_data.npz'), 'wb'),
+             features=features,
+             queries=queries,
+             galleries=galleries)
+
+    'Looks like there are quite some all zero columns, verify and remove them'
+    logging.info('Start doing NCA.')
     nca = metric_learn.NCA(verbose=True)
     nca.fit(features, labels)
     X_lmnn = nca.transform(features)
