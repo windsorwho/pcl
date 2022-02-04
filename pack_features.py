@@ -43,14 +43,14 @@ def pack_test_a_features():
     gallery_files = glob.glob(
         os.path.join(TEST_A_DIR, 'gallery_feature_A', '*.dat'))
     gallery_features = [
-        np.fromfile(os.path.join(TEST_A_DIR, 'gallery_feature_A', name),
-                    dtype=np.dtype('<f')) for name in tqdm.tqdm(gallery_files)
+        np.fromfile(name, dtype=np.dtype('<f'))
+        for name in tqdm.tqdm(gallery_files)
     ]
     query_files = glob.glob(
         os.path.join(TEST_A_DIR, 'query_feature_A', '*.dat'))
     query_features = [
-        np.fromfile(os.path.join(TEST_A_DIR, 'query_feature_A', name),
-                    dtype=np.dtype('<f')) for name in tqdm.tqdm(query_files)
+        np.fromfile(name, dtype=np.dtype('<f'))
+        for name in tqdm.tqdm(query_files)
     ]
     gallery_features = np.array(gallery_features)
     query_features = np.array(query_features)
@@ -58,7 +58,13 @@ def pack_test_a_features():
                 open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'wb'))
     pickle.dump(gallery_features,
                 open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'wb'))
-    return query_features, gallery_features
+    query_files = [os.path.basename(name) for name in query_files]
+    gallery_files = [os.path.basename(name) for name in gallery_files]
+    pickle.dump(query_files,
+                open(os.path.join(TEST_A_DIR, 'query_names.pkl'), 'wb'))
+    pickle.dump(gallery_files,
+                open(os.path.join(TEST_A_DIR, 'gallery_names.pkl'), 'wb'))
+    return query_features, gallery_features, query_files, gallery_files
 
 
 def pack_train_features():
@@ -83,7 +89,11 @@ def read_packed_test_a_data():
         open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'rb'))
     query_features = pickle.load(
         open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'rb'))
-    return query_features, gallery_features
+    query_names = pickle.load(
+        open(os.path.join(TEST_A_DIR, 'query_names.pkl'), 'rb'))
+    gallery_names = pickle.load(
+        open(os.path.join(TEST_A_DIR, 'gallery_names.pkl'), 'rb'))
+    return query_features, gallery_features, query_names, gallery_names
 
 
 def remove_single_class(features, labels):
@@ -95,9 +105,7 @@ def remove_single_class(features, labels):
     labels = np.delete(labels, single_idx)
     " make sure no more single class label exist"
     if len(np.where(np.bincount(labels) == 1)[0]) != 0:
-        logging.error(
-            "There are still single example classes after remove_single_class()"
-        )
+        logging.error("There are still single example classes.")
     return features, labels
 
 
@@ -134,7 +142,7 @@ def remove_null_columns(train, query, gallery):
     if (not np.array_equal(gallery_idx, query_idx)) or (not np.array_equal(
             train_idx, query_idx)):
         logging.error(
-            'Inputs do not share same zero colums, will return original input..'
+            'Inputs do not share same zero colums, will return original input.'
         )
         return train, query, gallery
     train = train[:, train_idx]
@@ -145,15 +153,18 @@ def remove_null_columns(train, query, gallery):
 
 def try_metric_learn():
     features, labels = read_packed_train_data()
-    queries, galleries = read_packed_test_a_data()
+    queries, galleries, query_names, gallery_names = read_packed_test_a_data()
     features, labels = remove_single_class(features, labels)
     features, queries, galleries = remove_null_columns(features, queries,
                                                        galleries)
     np.savez(open(os.path.join(TRAIN_DATA_DIR, 'dense_data.npz'), 'wb'),
-             features=features,
+             features=features
+             labels=labels,
              queries=queries,
-             galleries=galleries)
-
+             galleries=galleries,
+             query_names=query_names,
+             gallery_names=gallery_names)
+    return
     'Looks like there are quite some all zero columns, verify and remove them'
     logging.info('Start doing NCA.')
     nca = metric_learn.NCA(verbose=True)
