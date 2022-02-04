@@ -3,3 +3,4 @@ metric_learn
 matplotlib
 scipy
 tqdm
+faiss-cpu
