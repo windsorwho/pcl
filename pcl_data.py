@@ -7,12 +7,12 @@ import utils
 
 
 class PCLTrainDataset(Dataset):
-
     def __init__(self, npz_path):
-        if not os.path.exist(npz_path):
+        if not os.path.exists(npz_path):
             logging.error('NPZ file does not exist. Will throw exception.')
             raise ValueError
         np_dict = np.load(npz_path)
+
         self.features = torch.from_numpy(
             utils.normalize_features(np_dict['features']))
         self.labels = torch.from_numpy(np_dict['labels'])
