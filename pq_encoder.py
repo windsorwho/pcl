@@ -2,16 +2,10 @@ import faiss
 import os
 import numpy as np
 import json
+import utils
 
 DATA_FILENAME = '/data/pcl/train/dense_data.npz'
 ALIGNED_FEATURE_DIM = 464
-
-
-def normalize_features(features):
-    norms = 1.0 / np.linalg.norm(features, axis=1)
-    norms = np.tile(np.expand_dims(norms, 1), (1, features.shape[1]))
-    features = np.multiply(features, norms).astype(np.float32)
-    return features
 
 
 def align_features(data_dict):
@@ -19,7 +13,7 @@ def align_features(data_dict):
     new_order = np.random.permutation(ALIGNED_FEATURE_DIM)
     for name in feature_names:
         feature = data_dict[name]
-        feature = normalize_features(feature)
+        feature = utils.normalize_features(feature)
         feature = np.pad(feature,
                          ((0, 0), (0, ALIGNED_FEATURE_DIM - feature.shape[1])),
                          constant_values=0)
