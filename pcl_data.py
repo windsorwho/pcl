@@ -7,7 +7,6 @@ import utils
 
 
 class PCLTrainDataset(Dataset):
-
     def __init__(self, npz_path):
         if not os.path.exists(npz_path):
             logging.error('NPZ file does not exist. Will throw exception.')
