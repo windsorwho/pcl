@@ -148,6 +148,7 @@ def remove_null_columns(train, query, gallery):
     train = train[:, train_idx]
     query = query[:, train_idx]
     gallery = gallery[:, train_idx]
+    pickle.dump(train_idx, open('non_null_index.pkl', 'wb'))
     return train, query, gallery
 
 
@@ -158,7 +159,7 @@ def try_metric_learn():
     features, queries, galleries = remove_null_columns(features, queries,
                                                        galleries)
     np.savez(open(os.path.join(TRAIN_DATA_DIR, 'dense_data.npz'), 'wb'),
-             features=features
+             features=features,
              labels=labels,
              queries=queries,
              galleries=galleries,
