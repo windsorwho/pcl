@@ -41,7 +41,7 @@ def top_k(queries, galleries, k=100):
     return order
 
 data_dict = np.load(
-    open(os.path.join(DATA_DIR, 'train', 'dense_data.npz'), 'rb'))
+    open(os.path.join(DATA_DIR, 'train', 'dense_data_b.npz'), 'rb'))
 all_queries = data_dict['queries']
 galleries = data_dict['galleries']
 gallery_names = data_dict['gallery_names']
@@ -70,4 +70,4 @@ for i in tqdm.tqdm(range(0, len(all_queries), batch_size)):
             os.path.basename(gallery_names[idx]) for idx in top_idx[i]
         ]
         result_dict[key] = top_names
-json.dump(result_dict, open('result.json', 'w'))
+json.dump(result_dict, open('result_b_naive.json', 'w'))

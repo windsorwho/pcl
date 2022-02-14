@@ -12,6 +12,7 @@ import metric_learn
 
 TRAIN_DATA_DIR = '/Users/wenzehu/data/pcl/train'
 TEST_A_DIR = '/Users/wenzehu/data/pcl/test_A'
+TEST_B_DIR = '/Users/wenzehu/data/pcl/test_B'
 logFormatter = logging.Formatter(
     "%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 rootLogger = logging.getLogger()
@@ -39,15 +40,15 @@ def read_features(label_filename, feature_path):
     return labels, features
 
 
-def pack_test_a_features():
+def pack_test_features(dataset_folder, query_folder_name, gallery_folder_name):
     gallery_files = glob.glob(
-        os.path.join(TEST_A_DIR, 'gallery_feature_A', '*.dat'))
+        os.path.join(dataset_folder, gallery_folder_name, '*.dat'))
     gallery_features = [
         np.fromfile(name, dtype=np.dtype('<f'))
         for name in tqdm.tqdm(gallery_files)
     ]
     query_files = glob.glob(
-        os.path.join(TEST_A_DIR, 'query_feature_A', '*.dat'))
+        os.path.join(dataset_folder, query_folder_name, '*.dat'))
     query_features = [
         np.fromfile(name, dtype=np.dtype('<f'))
         for name in tqdm.tqdm(query_files)
@@ -55,16 +56,27 @@ def pack_test_a_features():
     gallery_features = np.array(gallery_features)
     query_features = np.array(query_features)
     pickle.dump(query_features,
-                open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'wb'))
-    pickle.dump(gallery_features,
-                open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'wb'))
+                open(os.path.join(dataset_folder, 'query_features.pkl'), 'wb'))
+    pickle.dump(
+        gallery_features,
+        open(os.path.join(dataset_folder, 'gallery_features.pkl'), 'wb'))
     query_files = [os.path.basename(name) for name in query_files]
     gallery_files = [os.path.basename(name) for name in gallery_files]
     pickle.dump(query_files,
-                open(os.path.join(TEST_A_DIR, 'query_names.pkl'), 'wb'))
+                open(os.path.join(dataset_folder, 'query_names.pkl'), 'wb'))
     pickle.dump(gallery_files,
-                open(os.path.join(TEST_A_DIR, 'gallery_names.pkl'), 'wb'))
+                open(os.path.join(dataset_folder, 'gallery_names.pkl'), 'wb'))
     return query_features, gallery_features, query_files, gallery_files
+
+
+def pack_test_a_features():
+    return pack_test_features(TEST_A_DIR, 'query_feature_A',
+                              'gallery_feature_A')
+
+
+def pack_test_b_features():
+    return pack_test_features(TEST_B_DIR, 'query_feature_B',
+                              'gallery_feature_B')
 
 
 def pack_train_features():
@@ -84,16 +96,20 @@ def read_packed_train_data():
     return features, labels
 
 
-def read_packed_test_a_data():
+def read_packed_test_data(foldername):
     gallery_features = pickle.load(
-        open(os.path.join(TEST_A_DIR, 'gallery_features.pkl'), 'rb'))
+        open(os.path.join(foldername, 'gallery_features.pkl'), 'rb'))
     query_features = pickle.load(
-        open(os.path.join(TEST_A_DIR, 'query_features.pkl'), 'rb'))
+        open(os.path.join(foldername, 'query_features.pkl'), 'rb'))
     query_names = pickle.load(
-        open(os.path.join(TEST_A_DIR, 'query_names.pkl'), 'rb'))
+        open(os.path.join(foldername, 'query_names.pkl'), 'rb'))
     gallery_names = pickle.load(
-        open(os.path.join(TEST_A_DIR, 'gallery_names.pkl'), 'rb'))
+        open(os.path.join(foldername, 'gallery_names.pkl'), 'rb'))
     return query_features, gallery_features, query_names, gallery_names
+
+
+def read_packed_test_a_data():
+    return read_packed_test_data(TEST_A_DIR)
 
 
 def remove_single_class(features, labels):
@@ -144,12 +160,29 @@ def remove_null_columns(train, query, gallery):
         logging.error(
             'Inputs do not share same zero colums, will return original input.'
         )
+        assert ValueError
         return train, query, gallery
     train = train[:, train_idx]
     query = query[:, train_idx]
     gallery = gallery[:, train_idx]
     pickle.dump(train_idx, open('non_null_index.pkl', 'wb'))
     return train, query, gallery
+
+
+def dump_data_for_test_b():
+    features, labels = read_packed_train_data()
+    queries, galleries, query_names, gallery_names = read_packed_test_data(
+        TEST_B_DIR)
+    features, labels = remove_single_class(features, labels)
+    features, queries, galleries = remove_null_columns(features, queries,
+                                                       galleries)
+    np.savez(open(os.path.join(TRAIN_DATA_DIR, 'dense_data_b.npz'), 'wb'),
+             features=features,
+             labels=labels,
+             queries=queries,
+             galleries=galleries,
+             query_names=query_names,
+             gallery_names=gallery_names)
 
 
 def try_metric_learn():
@@ -165,8 +198,6 @@ def try_metric_learn():
              galleries=galleries,
              query_names=query_names,
              gallery_names=gallery_names)
-    return
-    'Looks like there are quite some all zero columns, verify and remove them'
     logging.info('Start doing NCA.')
     nca = metric_learn.NCA(verbose=True)
     nca.fit(features, labels)
