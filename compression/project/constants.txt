@@ -1,0 +1,2 @@
+PQ_64_CODEC = './codec_64.pkl'
+NONE_NULL_COLUMNS_FILE = './non_null_index.pkl'

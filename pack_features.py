@@ -8,11 +8,11 @@ import pickle
 import glob
 from sklearn.manifold import TSNE
 
-import metric_learn
-
 TRAIN_DATA_DIR = '/Users/wenzehu/data/pcl/train'
 TEST_A_DIR = '/Users/wenzehu/data/pcl/test_A'
 TEST_B_DIR = '/Users/wenzehu/data/pcl/test_B'
+INPUT_DIM = 2048
+TRIMMED_FEATURE_DIM = 512
 logFormatter = logging.Formatter(
     "%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 rootLogger = logging.getLogger()
@@ -162,10 +162,20 @@ def remove_null_columns(train, query, gallery):
         )
         assert ValueError
         return train, query, gallery
-    train = train[:, train_idx]
-    query = query[:, train_idx]
-    gallery = gallery[:, train_idx]
-    pickle.dump(train_idx, open('non_null_index.pkl', 'wb'))
+
+    'Pack with extra dims to make it 512 dim'
+    non_null_idx = train_idx.copy()
+    extra_idx = np.random.permutation(INPUT_DIM)
+    extra_idx = np.setdiff1d(extra_idx, non_null_idx)
+    non_null_idx = np.concatenate(
+        (non_null_idx, extra_idx[0:TRIMMED_FEATURE_DIM - len(non_null_idx)]),
+        axis=0)
+    non_null_idx = np.sort(non_null_idx)
+
+    train = train[:, non_null_idx]
+    query = query[:, non_null_idx]
+    gallery = gallery[:, non_null_idx]
+    pickle.dump(non_null_idx, open('non_null_index.pkl', 'wb'))
     return train, query, gallery
 
 
@@ -185,7 +195,7 @@ def dump_data_for_test_b():
              gallery_names=gallery_names)
 
 
-def try_metric_learn():
+def pack_all_features():
     features, labels = read_packed_train_data()
     queries, galleries, query_names, gallery_names = read_packed_test_a_data()
     features, labels = remove_single_class(features, labels)
@@ -198,9 +208,3 @@ def try_metric_learn():
              galleries=galleries,
              query_names=query_names,
              gallery_names=gallery_names)
-    logging.info('Start doing NCA.')
-    nca = metric_learn.NCA(verbose=True)
-    nca.fit(features, labels)
-    X_lmnn = nca.transform(features)
-    logging.info('Finished embedding.')
-    plot_tsne(X_lmnn, labels)

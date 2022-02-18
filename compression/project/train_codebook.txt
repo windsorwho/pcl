@@ -1,0 +1,22 @@
+import numpy as np
+import pq
+import pickle
+
+DATA_FILENAME = '/Users/wenzehu/data/pcl/train/dense_data.npz'
+
+np_dict = np.load(DATA_FILENAME)
+data_dict = dict()
+for key in np_dict.keys():
+    data_dict[key] = np_dict[key]
+
+queries = data_dict['queries']
+galleries = data_dict['galleries']
+gallery_names = data_dict['gallery_names']
+query_names = data_dict['query_names']
+features = data_dict['features']
+
+all_features = np.concatenate((queries, galleries, features), axis=0)
+
+pq_codec = pq.PQ(64, Ks=256, verbose=True)
+pq_codec.fit(all_features, iter=20, seed=1)
+pickle.dump(pq_codec, open('./codec_64.pkl', 'wb'))

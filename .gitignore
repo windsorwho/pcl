@@ -118,3 +118,5 @@ result_reverse.json
 .train.py.swp
 *.0
 *.swp
+compression/.DS_Store
+.DS_Store
