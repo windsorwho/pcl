@@ -117,3 +117,4 @@ result.json
 result_reverse.json
 .train.py.swp
 *.0
+*.swp
