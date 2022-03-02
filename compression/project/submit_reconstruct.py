@@ -6,7 +6,7 @@ import sys
 
 import project.pq as pq
 #import project.constants as constants
-PQ_64_CODEC = './codec_64.pkl'
+CODEC_BASENAME = './codec_'
 NONE_NULL_COLUMNS_FILE = './non_null_index.pkl'
 sys.modules['pq'] = pq
 
@@ -36,7 +36,7 @@ def reconstruct(byte_rate: str):
     reconstructed_query_fea_dir = 'reconstructed_query_feature/{}'.format(
         byte_rate)
     os.makedirs(reconstructed_query_fea_dir, exist_ok=True)
-    pq_codec = pickle.load(open(PQ_64_CODEC, 'rb'))
+    pq_codec = pickle.load(open(CODEC_BASENAME + byte_rate + '.pkl', 'rb'))
     non_null_index = pickle.load(open(NONE_NULL_COLUMNS_FILE, 'rb'))
 
     compressed_query_fea_paths = glob.glob(

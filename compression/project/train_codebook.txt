@@ -17,6 +17,6 @@ features = data_dict['features']
 
 all_features = np.concatenate((queries, galleries, features), axis=0)
 
-pq_codec = pq.PQ(64, Ks=256, verbose=True)
+pq_codec = pq.PQ(128, Ks=256, verbose=True)
 pq_codec.fit(all_features, iter=20, seed=1)
-pickle.dump(pq_codec, open('./codec_64.pkl', 'wb'))
+pickle.dump(pq_codec, open('./codec_128.pkl', 'wb'))

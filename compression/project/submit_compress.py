@@ -11,7 +11,7 @@ import project.pq as pq
 
 sys.modules['pq'] = pq
 
-PQ_64_CODEC = './codec_64.pkl'
+CODEC_BASENAME = './codec_'
 NONE_NULL_COLUMNS_FILE = './non_null_index.pkl'
 
 
@@ -46,9 +46,9 @@ def compress_feature(fea: np.ndarray, encoder: pq.PQ, non_null_index: np.array,
     return True
 
 
-def compress_all(input_path: str, bytes_rate: int):
+def compress_all(input_path: str, bytes_rate: str):
     'Load the pq encoder for the current byte length.'
-    pq_codec = pickle.load(open(PQ_64_CODEC, 'rb'))
+    pq_codec = pickle.load(open(CODEC_BASENAME + bytes_rate + '.pkl', 'rb'))
     non_null_index = pickle.load(open(NONE_NULL_COLUMNS_FILE, 'rb'))
 
     compressed_query_fea_dir = 'compressed_query_feature/{}'.format(bytes_rate)
@@ -62,12 +62,12 @@ def compress_all(input_path: str, bytes_rate: int):
                                            query_basename + '.dat')
         compress_feature(fea, pq_codec, non_null_index, compressed_fea_path)
 
-    print('Encode Done for bytes_rate' + str(bytes_rate))
+    print('Encode Done for bytes_rate' + bytes_rate)
 
 
 def compress(test_path: str, byte: str):
     query_fea_dir = 'query_feature'
     extract_zipfile(test_path, query_fea_dir)
-    compress_all(query_fea_dir, int(byte))
+    compress_all(query_fea_dir, byte)
     shutil.rmtree(query_fea_dir)
     return 1
